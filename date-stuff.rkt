@@ -1,6 +1,7 @@
 #lang racket
 (require racket/date)
 (require racket/block)
+(provide (all-defined-out))
 
 (define months (list
                  (list 1 "January" 31)
