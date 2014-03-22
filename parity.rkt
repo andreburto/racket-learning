@@ -1,5 +1,5 @@
 #lang racket
-(require racket/draw racket/file racket/math racket/class racket/gui/base)
+(require racket/draw racket/file racket/class racket/gui/base)
 (struct htg (home-dir parity))
 (define setup (htg (current-directory) "parity")) ;; YOU NEED A DIRECTORY CALLED parity WITH IMAGES.
 (define (list-files path) (filter (lambda (f) (file-exists? f) f) (directory-list (build-path (htg-home-dir setup) path))))
