@@ -3,9 +3,16 @@
 (require racket/block)
 (provide (all-defined-out))
 
+(define (is-leap? y)
+  (cond
+    [(= (modulo y 400) 0) #t]
+    [(= (modulo y 100) 0) #f]
+    [(= (modulo y 4) 0) #t]
+    [else #f]))
+
 (define months (list
                  (list 1 "January" 31)
-                 (list 2 "February" ((lambda (d) (if (= (modulo d 400) 0) 29 (if (= (modulo d 100) 0) 28 (if (= (modulo d 4) 0) 29 28)))) (date-year (current-date))))
+                 (list 2 "February" (if (is-leap? (date-year (current-date))) 29 28))
                  (list 3 "March" 31)
                  (list 4 "April" 30)
                  (list 5 "May" 31)
@@ -17,7 +24,7 @@
                  (list 11 "November" 30)
                  (list 12 "December" 31)))
 
-(define (show-days [x months]) (map (lambda (m) (format "~a has ~a days this year." (list-ref m 1) (list-ref m 2))) x))
+(define (show-days [x months])(map (lambda (m) (format "~a has ~a days this year." (list-ref m 1) (list-ref m 2))) x))
 
 (define (get-month [mon (date-month (current-date))] [monthlist months]) (if (= mon (list-ref (first monthlist) 0))
                                                                              (first monthlist)
@@ -50,7 +57,22 @@
                                                                             (if (= day 0) "1" day))]))
                                                                (current-date)))
 
-(define (show-days-this-month [mon (date-month (current-date))]) (block
-                                                                   (define one-month (car (show-days (months-in-range mon mon))))
-                                                                   (display one-month)))
+(define (show-days-this-month [mon (date-month (current-date))])
+  (block
+   (define one-month (car (show-days (months-in-range mon mon))))
+   (display one-month)))
 (define sdtm show-days-this-month)
+
+(define (days-in-year [m months])
+  (define (count-days l [d 0])
+    (if (empty? l)
+        d
+        (count-days (cdr l) (+ (last (first l)) d))))
+  (count-days m))
+
+(define (days-so-far [m months])
+  (define (count-days l [d 0])
+    (if (= (first (first l)) (date-month (current-date)))
+        (+ d (date-day (current-date)))
+        (count-days (cdr l) (+ d (last (first l))))))
+  (count-days m))
