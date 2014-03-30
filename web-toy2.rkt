@@ -1,5 +1,6 @@
+;; Working from: http://docs.racket-lang.org/more/index.html
 #lang racket
-(require racket/block)
+(require xml net/url)
 (require "date-stuff.rkt")
 
 (define (handle in out)
@@ -13,21 +14,27 @@
   (display "</body></html>" out))
 
 (define (accept-and-handle listener)
-  (define-values (in out) (tcp-accept listener))
-  (block
-  (define t (thread
-             (lambda () 
-               (handle in out)
-               (close-input-port in)
-               (close-output-port out))))
-  (thread (lambda () (sleep 10) (kill-thread t)))))
+  (define cust (make-custodian))
+  (parameterize ([current-custodian cust])
+    (define-values (in out) (tcp-accept listener))
+    (thread (lambda () 
+              (handle in out)
+              (close-input-port in)
+              (close-output-port out))))
+  (thread (lambda ()
+              (sleep 10)
+              (custodian-shutdown-all cust))))
 
 (define (serve port-no)
-  (define listener (tcp-listen port-no 5 #t))
-  (define (loop)
-    (accept-and-handle listener)
-    (loop))
-    (block (thread loop)))
+  (define main-cust (make-custodian))
+  (parameterize ([current-custodian main-cust])
+    (define listener (tcp-listen port-no 5 #t))
+    (define (loop)
+      (accept-and-handle listener)
+      (loop))
+    (thread loop))
+  (lambda ()
+    (custodian-shutdown-all main-cust)))
 
-;;(define stop (serve 4545))
-(serve 4545)
+(define stop (serve 4545))
+;;(serve 4545)
